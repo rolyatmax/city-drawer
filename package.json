@@ -7,6 +7,7 @@
     "url": "git+https://github.com/rolyatmax/skyscraper.git"
   },
   "scripts": {
+    "install": "tar -zxvf data.tar.gz",
     "build": "webpack",
     "serve": "open http://localhost:36418 && python -m SimpleHTTPServer 36418",
     "lint": "flow && eslint js",
