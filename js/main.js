@@ -15,6 +15,16 @@ function loadJSON(file) {
   return fetch(file).then((resp) => resp.json());
 }
 
+function batch(list, size) {
+  const batches = [];
+  list = list.slice();
+  while (list.length) {
+    batches.push(list.slice(0, size));
+    list = list.slice(size);
+  }
+  return batches;
+}
+
 loadJSON('data/lots.geojson')
   .then((lots) => {
     geoData.lots = lots;
@@ -68,17 +78,16 @@ loadJSON('data/lots.geojson')
     const xMapper = createMapper(minX, maxX, 0, sketch.width);
     const yMapper = createMapper(maxY, minY, 0, sketch.height);
     const mappedPoints = points.map(([x, y]) => [xMapper(x) | 0, yMapper(y) | 0]);
-
-    mappedPoints.forEach(([x, y], i) => {
-      if (i % 25 !== 0) return;
-      sketch.beginPath();
-      sketch.arc(x, y, 1, 0, Math.PI * 2);
-      sketch.fillStyle = 'green';
-      sketch.fill();
-      sketch.strokeStyle = 'blue';
-      sketch.lineWidth = 1;
-      sketch.stroke();
-      // console.log(x, y);
+    batch(mappedPoints, 800).forEach(pts => {
+      setTimeout(() => {
+        pts.forEach(([x, y], i) => {
+          if (i % 10 !== 0) return;
+          sketch.beginPath();
+          sketch.arc(x, y, 1, 0, Math.PI * 2);
+          sketch.fillStyle = 'rgba(10, 10, 10, 0.3)';
+          sketch.fill();
+        });
+      }, 5);
     });
 
     window.sketch = sketch;
