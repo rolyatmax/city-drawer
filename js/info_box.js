@@ -52,7 +52,7 @@ export default class InfoBox {
 
   fadeInText() {
     this.letters.forEach((span, i) => {
-      const delay = (this.letters.length - i) * 15;
+      const delay = (this.letters.length - i) * 25;
       span.style.transition = `all 400ms cubic-bezier(.15,.62,.38,.94) ${delay}ms`;
     });
     this.el.classList.add('show');
