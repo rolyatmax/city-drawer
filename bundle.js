@@ -62,9 +62,6 @@
 	
 	var geoData = {};
 	
-	var info = new _info_box2.default(document.querySelector('.info'));
-	// setTimeout(() => info.show(), 3000);
-	
 	var container = document.getElementById('wrapper');
 	
 	function loadJSON(file) {
@@ -103,50 +100,65 @@
 	    });
 	  });
 	
-	  var _points$reduce = points.reduce(function (_ref3, _ref4) {
-	    var _ref6 = _slicedToArray(_ref3, 2);
+	  var maxPt = points.reduce(function (_ref, _ref2) {
+	    var _ref4 = _slicedToArray(_ref, 2);
 	
-	    var mX = _ref6[0];
-	    var mY = _ref6[1];
+	    var mX = _ref4[0];
+	    var mY = _ref4[1];
 	
-	    var _ref5 = _slicedToArray(_ref4, 2);
+	    var _ref3 = _slicedToArray(_ref2, 2);
 	
-	    var x = _ref5[0];
-	    var y = _ref5[1];
+	    var x = _ref3[0];
+	    var y = _ref3[1];
 	    return [mX > x ? mX : x, mY > y ? mY : y];
 	  }, [-Infinity, -Infinity]);
 	
-	  var _points$reduce2 = _slicedToArray(_points$reduce, 2);
+	  var minPt = points.reduce(function (_ref5, _ref6) {
+	    var _ref8 = _slicedToArray(_ref5, 2);
 	
-	  var maxX = _points$reduce2[0];
-	  var maxY = _points$reduce2[1];
+	    var mX = _ref8[0];
+	    var mY = _ref8[1];
 	
-	  var _points$reduce3 = points.reduce(function (_ref7, _ref8) {
-	    var _ref10 = _slicedToArray(_ref7, 2);
+	    var _ref7 = _slicedToArray(_ref6, 2);
 	
-	    var mX = _ref10[0];
-	    var mY = _ref10[1];
-	
-	    var _ref9 = _slicedToArray(_ref8, 2);
-	
-	    var x = _ref9[0];
-	    var y = _ref9[1];
+	    var x = _ref7[0];
+	    var y = _ref7[1];
 	    return [mX < x ? mX : x, mY < y ? mY : y];
 	  }, [Infinity, Infinity]);
 	
-	  var _points$reduce4 = _slicedToArray(_points$reduce3, 2);
+	  var createMapper = function createMapper(canvasHeight, canvasWidth, min, max) {
+	    var _min = _slicedToArray(min, 2);
 	
-	  var minX = _points$reduce4[0];
-	  var minY = _points$reduce4[1];
+	    var minX = _min[0];
+	    var minY = _min[1];
+	
+	    var _max = _slicedToArray(max, 2);
+	
+	    var maxX = _max[0];
+	    var maxY = _max[1];
 	
 	
-	  var createMapper = function createMapper(lowA, highA, lowB, highB) {
-	    return function (val) {
-	      var rangeA = highA - lowA;
-	      var rangeB = highB - lowB;
-	      return (val - lowA) / rangeA * rangeB + lowB;
+	    var xDiff = maxX - minX;
+	    var yDiff = maxY - minY;
+	
+	    var xScale = canvasWidth / xDiff;
+	    var yScale = canvasHeight / yDiff;
+	    var scale = xScale < yScale ? xScale : yScale;
+	
+	    // center
+	    var halfway = canvasWidth / 2;
+	    var halfMapWidth = xDiff * scale / 2;
+	    var margin = halfway - halfMapWidth;
+	    return function (_ref9) {
+	      var _ref10 = _slicedToArray(_ref9, 2);
+	
+	      var x = _ref10[0];
+	      var y = _ref10[1];
+	      return [margin + (x - minX) * scale, (maxY - y) * scale];
 	    };
 	  };
+	
+	  container.style.height = container.getBoundingClientRect().height * 2 + 'px';
 	
 	  var sketch = _sketchJs2.default.create({
 	    container: container,
@@ -155,8 +167,8 @@
 	    autostart: false,
 	    retina: true,
 	    globals: false,
-	    width: container.getBoundingClientRect().width,
-	    height: container.getBoundingClientRect().height,
+	    width: container.getBoundingClientRect().width * 2,
+	    height: container.getBoundingClientRect().height * 2,
 	
 	    resize: function resize() {
 	      var _container$getBoundin = container.getBoundingClientRect();
@@ -173,20 +185,18 @@
 	    }
 	  });
 	
-	  var xMapper = createMapper(minX, maxX, 0, sketch.width);
-	  var yMapper = createMapper(maxY, minY, 0, sketch.height);
+	  var info = new _info_box2.default(document.querySelector('.info'));
+	  setTimeout(function () {
+	    return info.show();
+	  }, 3000);
+	
+	  var mapToCanvas = createMapper(sketch.height, sketch.width, minPt, maxPt);
 	  batch(polys, 100).forEach(function (polygons) {
 	    setTimeout(function () {
 	      polygons.forEach(function (poly) {
 	        poly.forEach(function (lines) {
 	          lines.forEach(function (line) {
-	            line = line.map(function (_ref) {
-	              var _ref2 = _slicedToArray(_ref, 2);
-	
-	              var x = _ref2[0];
-	              var y = _ref2[1];
-	              return [xMapper(x) | 0, yMapper(y) | 0];
-	            });
+	            line = line.map(mapToCanvas);
 	            sketch.beginPath();
 	            sketch.moveTo.apply(sketch, _toConsumableArray(line[0]));
 	            for (var i = 1; i < line.length; i++) {
