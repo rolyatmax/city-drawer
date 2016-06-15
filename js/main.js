@@ -1,5 +1,6 @@
 // @flow
 
+import 'whatwg-fetch';
 import Sketch from 'sketch-js';
 import InfoBox from './info_box';
 
