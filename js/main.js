@@ -7,7 +7,7 @@ import InfoBox from './info_box';
 const geoData = {};
 
 const info = new InfoBox(document.querySelector('.info'));
-setTimeout(() => info.show(), 3000);
+// setTimeout(() => info.show(), 3000);
 
 const container = document.getElementById('wrapper');
 
@@ -31,7 +31,9 @@ loadJSON('data/lots.geojson')
     window.geoData = geoData;
 
     const points = [];
-    const polys = lots.features.map(feat => feat.geometry.coordinates);
+    const polys = lots.features
+      .filter(feat => feat.properties.numfloors && feat.properties.numfloors >= 6)
+      .map(feat => feat.geometry.coordinates);
     polys.forEach(poly => {
       poly.forEach(lines => {
         lines.forEach(line => {
@@ -77,15 +79,21 @@ loadJSON('data/lots.geojson')
 
     const xMapper = createMapper(minX, maxX, 0, sketch.width);
     const yMapper = createMapper(maxY, minY, 0, sketch.height);
-    const mappedPoints = points.map(([x, y]) => [xMapper(x) | 0, yMapper(y) | 0]);
-    batch(mappedPoints, 800).forEach(pts => {
+    batch(polys, 100).forEach(polygons => {
       setTimeout(() => {
-        pts.forEach(([x, y], i) => {
-          if (i % 10 !== 0) return;
-          sketch.beginPath();
-          sketch.arc(x, y, 1, 0, Math.PI * 2);
-          sketch.fillStyle = 'rgba(10, 10, 10, 0.3)';
-          sketch.fill();
+        polygons.forEach(poly => {
+          poly.forEach(lines => {
+            lines.forEach(line => {
+              line = line.map(([x, y]) => [xMapper(x) | 0, yMapper(y) | 0]);
+              sketch.beginPath();
+              sketch.moveTo(...line[0]);
+              for (let i = 1; i < line.length; i++) {
+                sketch.lineTo(...line[i]);
+              }
+              sketch.strokeStyle = 'rgba(10, 10, 10, 0.5)';
+              sketch.stroke();
+            });
+          });
         });
       }, 5);
     });
