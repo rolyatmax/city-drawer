@@ -62,6 +62,7 @@ loadJSON('data/lots.geojson')
       const halfway = canvasWidth / 2;
       const halfMapWidth = xDiff * scale / 2;
       const margin = halfway - halfMapWidth;
+
       return ([x, y]) => ([margin + (x - minX) * scale, (maxY - y) * scale]);
     };
 
