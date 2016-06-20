@@ -313,15 +313,21 @@
 	
 	  var mapToCanvas = createMapper(drawer.canvas.height, drawer.canvas.width, minPt, maxPt);
 	  var i = 0;
-	  batch(segments, 12).forEach(function (segmentBatch) {
-	    i += 1;
-	    setTimeout(function () {
-	      segmentBatch.forEach(function (line) {
-	        line = line.map(mapToCanvas);
-	        drawer.arc(line, 2000, 'rgba(10, 10, 10, 0.5)');
-	      });
-	    }, 15 * i);
-	  });
+	  var batches = batch(segments, 12);
+	  while (batches.length) {
+	    (function () {
+	      var index = Math.random() * batches.length | 0;
+	      var curBatch = batches[index];
+	      batches.splice(index, 1);
+	      i += 1;
+	      setTimeout(function () {
+	        curBatch.forEach(function (line) {
+	          line = line.map(mapToCanvas);
+	          drawer.arc(line, 2000, 'rgba(10, 10, 10, 0.5)');
+	        });
+	      }, 15 * i);
+	    })();
+	  }
 	});
 
 /***/ },

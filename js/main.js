@@ -187,13 +187,19 @@ loadJSON('data/segments.json')
 
   const mapToCanvas = createMapper(drawer.canvas.height, drawer.canvas.width, minPt, maxPt);
   let i = 0;
-  batch(segments, 12).forEach(segmentBatch => {
-    i += 1;
-    setTimeout(() => {
-      segmentBatch.forEach(line => {
-        line = line.map(mapToCanvas);
-        drawer.arc(line, 2000, 'rgba(10, 10, 10, 0.5)');
-      });
-    }, 15 * i);
-  });
+  const batches = batch(segments, 12);
+  while (batches.length) {
+    (() => {
+      const index = Math.random() * batches.length | 0;
+      const curBatch = batches[index];
+      batches.splice(index, 1);
+      i += 1;
+      setTimeout(() => {
+        curBatch.forEach(line => {
+          line = line.map(mapToCanvas);
+          drawer.arc(line, 2000, 'rgba(10, 10, 10, 0.5)');
+        });
+      }, 15 * i);
+    })();
+  }
 });
