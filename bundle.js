@@ -313,7 +313,7 @@
 	
 	  var mapToCanvas = createMapper(drawer.canvas.height, drawer.canvas.width, minPt, maxPt);
 	  var i = 0;
-	  var batches = batch(segments, 12);
+	  var batches = batch(segments, 8);
 	  while (batches.length) {
 	    (function () {
 	      var index = Math.random() * batches.length | 0;
@@ -323,9 +323,9 @@
 	      setTimeout(function () {
 	        curBatch.forEach(function (line) {
 	          line = line.map(mapToCanvas);
-	          drawer.arc(line, 2000, 'rgba(10, 10, 10, 0.5)');
+	          drawer.arc(line, 1800, 'rgba(10, 10, 10, 0.5)');
 	        });
-	      }, 15 * i);
+	      }, 25 * i);
 	    })();
 	  }
 	});
