@@ -46,194 +46,27 @@
 
 	'use strict';
 	
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-	
-	var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
-	
 	__webpack_require__(1);
 	
-	var _info_box = __webpack_require__(2);
+	var _sketchJs = __webpack_require__(2);
+	
+	var _sketchJs2 = _interopRequireDefault(_sketchJs);
+	
+	var _info_box = __webpack_require__(3);
 	
 	var _info_box2 = _interopRequireDefault(_info_box);
 	
+	var _helpers = __webpack_require__(5);
+	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-	
-	function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
-	
-	var callbacks = [];
-	
-	function loop(t) {
-	  callbacks = callbacks.map(function (cb) {
-	    return cb(t) ? cb : null;
-	  }).filter(function (cb) {
-	    return cb;
-	  });
-	  if (callbacks.length) requestAnimationFrame(loop);
-	}
-	
-	function register(cb) {
-	  var running = !!callbacks.length;
-	  callbacks.push(cb);
-	  if (!running) {
-	    requestAnimationFrame(loop);
-	  }
-	
-	  return function remove() {
-	    var index = callbacks.indexOf(cb);
-	    if (index < 0) {
-	      return;
-	    }
-	    callbacks.splice(index, 1);
-	  };
-	}
-	
-	function easeIn(step, start, change) {
-	  return change * (1 - Math.pow(1 - step, 3)) + start;
-	}
-	
-	function startAnimation(renderFn, duration) {
-	  return new Promise(function (resolve) {
-	    var startTime = void 0;
-	    register(function (t) {
-	      startTime = startTime || t;
-	      var step = (t - startTime) / duration;
-	      renderFn(step);
-	      if (step >= 1) {
-	        resolve();
-	        return false;
-	      }
-	      return true;
-	    });
-	  });
-	}
-	
-	function dist(_ref, _ref2) {
-	  var _ref4 = _slicedToArray(_ref, 2);
-	
-	  var x1 = _ref4[0];
-	  var y1 = _ref4[1];
-	
-	  var _ref3 = _slicedToArray(_ref2, 2);
-	
-	  var x2 = _ref3[0];
-	  var y2 = _ref3[1];
-	
-	  var xDist = x2 - x1;
-	  var yDist = y2 - y1;
-	  return Math.sqrt(xDist * xDist + yDist * yDist);
-	}
-	
-	function drawArc(ctx, arc, color, width) {
-	  ctx.beginPath();
-	  ctx.strokeStyle = color;
-	  ctx.lineWidth = width;
-	  ctx.moveTo.apply(ctx, _toConsumableArray(arc[0]));
-	  arc.slice(1).forEach(function (pt) {
-	    return ctx.lineTo.apply(ctx, _toConsumableArray(pt));
-	  });
-	  ctx.stroke();
-	}
-	
-	function getArcDist(arc) {
-	  var last = arc[0];
-	  return arc.reduce(function (total, pt) {
-	    total += dist(last, pt);
-	    last = pt;
-	    return total;
-	  }, 0);
-	}
-	
-	function cutArc(arc, perc) {
-	  var last = arc[0];
-	  var toGo = getArcDist(arc) * perc;
-	  var toDraw = [last];
-	  for (var i = 1, len = arc.length; i < len; i++) {
-	    var pt = arc[i];
-	    var segmentDist = dist(last, pt);
-	    if (!segmentDist) {
-	      continue;
-	    }
-	    if (toGo === 0) {
-	      break;
-	    }
-	    if (segmentDist <= toGo) {
-	      toDraw.push(pt);
-	      toGo -= segmentDist;
-	      last = pt;
-	      continue;
-	    }
-	    var cutPerc = toGo / segmentDist;
-	    var x = (pt[0] - last[0]) * cutPerc + last[0];
-	    var y = (pt[1] - last[1]) * cutPerc + last[1];
-	    toDraw.push([x, y]);
-	    break;
-	  }
-	  return toDraw;
-	}
-	
-	var Drawer = function () {
-	  function Drawer(container) {
-	    _classCallCheck(this, Drawer);
-	
-	    var _container$getBoundin = container.getBoundingClientRect();
-	
-	    var height = _container$getBoundin.height;
-	    var width = _container$getBoundin.width;
-	
-	    var canvas = document.createElement('canvas');
-	    canvas.style.height = height + 'px';
-	    canvas.style.width = width + 'px';
-	    canvas.height = height * 2;
-	    canvas.width = width * 2;
-	    container.appendChild(canvas);
-	    this.ctx = canvas.getContext('2d');
-	    this.canvas = canvas;
-	  }
-	
-	  _createClass(Drawer, [{
-	    key: 'arc',
-	    value: function arc(_arc, duration, color) {
-	      var _this = this;
-	
-	      var width = arguments.length <= 3 || arguments[3] === undefined ? 1 : arguments[3];
-	
-	      return startAnimation(function (step) {
-	        var perc = easeIn(step, 0, 1);
-	        var toDraw = cutArc(_arc, perc);
-	        drawArc(_this.ctx, toDraw, color, width);
-	      }, duration);
-	    }
-	  }, {
-	    key: 'clear',
-	    value: function clear() {
-	      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-	    }
-	  }]);
-	
-	  return Drawer;
-	}();
-	
+	var BRUSH_SIZE = 150;
+	var DURATION = 1500;
 	var container = document.getElementById('wrapper');
 	
-	function loadJSON(file) {
-	  return fetch(file).then(function (resp) {
-	    return resp.json();
-	  });
-	}
-	
-	function batch(list, size) {
-	  var batches = [];
-	  list = list.slice();
-	  while (list.length) {
-	    batches.push(list.slice(0, size));
-	    list = list.slice(size);
-	  }
-	  return batches;
-	}
-	
-	loadJSON('data/segments.json').then(function (segments) {
+	fetch('data/segments.json').then(function (resp) {
+	  return resp.json();
+	}).then(function (segments) {
 	  window.segments = segments;
 	
 	  var points = [];
@@ -243,91 +76,80 @@
 	    });
 	  });
 	
-	  var maxPt = points.reduce(function (_ref5, _ref6) {
-	    var _ref8 = _slicedToArray(_ref5, 2);
+	  var _getMinMax = (0, _helpers.getMinMax)(points);
 	
-	    var mX = _ref8[0];
-	    var mY = _ref8[1];
+	  var minPt = _getMinMax.min;
+	  var maxPt = _getMinMax.max;
 	
-	    var _ref7 = _slicedToArray(_ref6, 2);
-	
-	    var x = _ref7[0];
-	    var y = _ref7[1];
-	    return [mX > x ? mX : x, mY > y ? mY : y];
-	  }, [-Infinity, -Infinity]);
-	
-	  var minPt = points.reduce(function (_ref9, _ref10) {
-	    var _ref12 = _slicedToArray(_ref9, 2);
-	
-	    var mX = _ref12[0];
-	    var mY = _ref12[1];
-	
-	    var _ref11 = _slicedToArray(_ref10, 2);
-	
-	    var x = _ref11[0];
-	    var y = _ref11[1];
-	    return [mX < x ? mX : x, mY < y ? mY : y];
-	  }, [Infinity, Infinity]);
-	
-	  var createMapper = function createMapper(canvasHeight, canvasWidth, min, max) {
-	    var _min = _slicedToArray(min, 2);
-	
-	    var minX = _min[0];
-	    var minY = _min[1];
-	
-	    var _max = _slicedToArray(max, 2);
-	
-	    var maxX = _max[0];
-	    var maxY = _max[1];
-	
-	
-	    var xDiff = maxX - minX;
-	    var yDiff = maxY - minY;
-	
-	    var xScale = canvasWidth / xDiff;
-	    var yScale = canvasHeight / yDiff;
-	    var scale = xScale < yScale ? xScale : yScale;
-	
-	    // center
-	    var halfway = canvasWidth / 2;
-	    var halfMapWidth = xDiff * scale / 2;
-	    var margin = halfway - halfMapWidth;
-	
-	    return function (_ref13) {
-	      var _ref14 = _slicedToArray(_ref13, 2);
-	
-	      var x = _ref14[0];
-	      var y = _ref14[1];
-	      return [margin + (x - minX) * scale, (maxY - y) * scale];
-	    };
-	  };
 	
 	  container.style.height = container.getBoundingClientRect().height * 2 + 'px';
 	
-	  var drawer = new Drawer(container);
+	  window.sketch = _sketchJs2.default.create({
+	    container: container,
+	    fullscreen: false,
+	    autopause: true,
+	    autoclear: true,
+	    autostart: true,
+	    retina: true,
+	    globals: false,
+	    width: container.getBoundingClientRect().width,
+	    height: container.getBoundingClientRect().height,
+	
+	    setup: function setup() {
+	      var mapToCanvas = (0, _helpers.createMapper)(this.height, this.width, minPt, maxPt);
+	      this.lines = segments.map(function (segment) {
+	        segment = segment.map(mapToCanvas);
+	        var color = 'rgba(10, 10, 10, 0.8)';
+	        var duration = DURATION;
+	        return new _helpers.Line({ segment: segment, color: color, duration: duration });
+	      });
+	      // this.lines = this.lines.sort((a, b) => (a.center[0] < b.center[0] ? -1 : 1));
+	    },
+	
+	
+	    // getWithinBounds(min, max) {
+	    //   return this.lines.filter(line => isWithinBounds(line, min, max));
+	    // },
+	
+	    resize: function resize() {
+	      var _container$getBoundin = container.getBoundingClientRect();
+	
+	      var width = _container$getBoundin.width;
+	      var height = _container$getBoundin.height;
+	
+	      this.canvas.style.height = height + 'px';
+	      this.canvas.style.width = width + 'px';
+	      this.canvas.height = height;
+	      this.canvas.width = width;
+	      this.height = height;
+	      this.width = width;
+	    },
+	    update: function update() {
+	      var _this = this;
+	
+	      var min = [this.mouse.x - BRUSH_SIZE, this.mouse.y - BRUSH_SIZE];
+	      var max = [this.mouse.x + BRUSH_SIZE, this.mouse.y + BRUSH_SIZE];
+	      this.lines.forEach(function (line) {
+	        var to = (0, _helpers.isWithinBounds)(line, min, max) ? 1 : 0;
+	        line.setTo(to, _this.millis);
+	      });
+	      this.lines.forEach(function (line) {
+	        return line.update(_this.millis);
+	      });
+	    },
+	    draw: function draw() {
+	      var _this2 = this;
+	
+	      this.lines.forEach(function (line) {
+	        return line.draw(_this2);
+	      });
+	    }
+	  });
 	
 	  var info = new _info_box2.default(document.querySelector('.info'));
 	  setTimeout(function () {
 	    return info.show();
 	  }, 3000);
-	
-	  var mapToCanvas = createMapper(drawer.canvas.height, drawer.canvas.width, minPt, maxPt);
-	  var i = 0;
-	  var batches = batch(segments, 8);
-	  while (batches.length) {
-	    (function () {
-	      var index = Math.random() * batches.length | 0;
-	      var curBatch = batches[index];
-	      batches.splice(index, 1);
-	      i += 1;
-	      setTimeout(function () {
-	        curBatch.forEach(function (line) {
-	          line = line.map(mapToCanvas);
-	          drawer.arc(line, 1800, 'rgba(10, 10, 10, 0.5)');
-	        });
-	      }, 25 * i);
-	    })();
-	  }
 	});
 
 /***/ },
@@ -773,6 +595,643 @@
 /* 2 */
 /***/ function(module, exports, __webpack_require__) {
 
+	
+	/* Copyright (C) 2013 Justin Windle, http://soulwire.co.uk */
+	
+	(function ( root, factory ) {
+	
+	    if ( true ) {
+	
+	        // CommonJS like
+	        module.exports = factory(root, root.document);
+	
+	    } else if ( typeof define === 'function' && define.amd ) {
+	
+	        // AMD
+	        define( function() { return factory( root, root.document ); });
+	
+	    } else {
+	
+	        // Browser global
+	        root.Sketch = factory( root, root.document );
+	    }
+	
+	}( typeof window !== "undefined" ? window : this, function ( window, document ) {
+	
+	
+	    "use strict";
+	
+	    /*
+	    ----------------------------------------------------------------------
+	
+	        Config
+	
+	    ----------------------------------------------------------------------
+	    */
+	
+	    var MATH_PROPS = 'E LN10 LN2 LOG2E LOG10E PI SQRT1_2 SQRT2 abs acos asin atan ceil cos exp floor log round sin sqrt tan atan2 pow max min'.split( ' ' );
+	    var HAS_SKETCH = '__hasSketch';
+	    var M = Math;
+	
+	    var CANVAS = 'canvas';
+	    var WEBGL = 'webgl';
+	    var DOM = 'dom';
+	
+	    var doc = document;
+	    var win = window;
+	
+	    var instances = [];
+	
+	    var defaults = {
+	
+	        fullscreen: true,
+	        autostart: true,
+	        autoclear: true,
+	        autopause: true,
+	        container: doc.body,
+	        interval: 1,
+	        globals: true,
+	        retina: false,
+	        type: CANVAS
+	    };
+	
+	    var keyMap = {
+	
+	         8: 'BACKSPACE',
+	         9: 'TAB',
+	        13: 'ENTER',
+	        16: 'SHIFT',
+	        27: 'ESCAPE',
+	        32: 'SPACE',
+	        37: 'LEFT',
+	        38: 'UP',
+	        39: 'RIGHT',
+	        40: 'DOWN'
+	    };
+	
+	    /*
+	    ----------------------------------------------------------------------
+	
+	        Utilities
+	
+	    ----------------------------------------------------------------------
+	    */
+	
+	    function isArray( object ) {
+	
+	        return Object.prototype.toString.call( object ) == '[object Array]';
+	    }
+	
+	    function isFunction( object ) {
+	
+	        return typeof object == 'function';
+	    }
+	
+	    function isNumber( object ) {
+	
+	        return typeof object == 'number';
+	    }
+	
+	    function isString( object ) {
+	
+	        return typeof object == 'string';
+	    }
+	
+	    function keyName( code ) {
+	
+	        return keyMap[ code ] || String.fromCharCode( code );
+	    }
+	
+	    function extend( target, source, overwrite ) {
+	
+	        for ( var key in source )
+	
+	            if ( overwrite || !( key in target ) )
+	
+	                target[ key ] = source[ key ];
+	
+	        return target;
+	    }
+	
+	    function proxy( method, context ) {
+	
+	        return function() {
+	
+	            method.apply( context, arguments );
+	        };
+	    }
+	
+	    function clone( target ) {
+	
+	        var object = {};
+	
+	        for ( var key in target ) {
+	            
+	            if ( key === 'webkitMovementX' || key === 'webkitMovementY' )
+	                continue;
+	
+	            if ( isFunction( target[ key ] ) )
+	
+	                object[ key ] = proxy( target[ key ], target );
+	
+	            else
+	
+	                object[ key ] = target[ key ];
+	        }
+	
+	        return object;
+	    }
+	
+	    /*
+	    ----------------------------------------------------------------------
+	
+	        Constructor
+	
+	    ----------------------------------------------------------------------
+	    */
+	
+	    function constructor( context ) {
+	
+	        var request, handler, target, parent, bounds, index, suffix, clock, node, copy, type, key, val, min, max, w, h;
+	
+	        var counter = 0;
+	        var touches = [];
+	        var resized = false;
+	        var setup = false;
+	        var ratio = win.devicePixelRatio || 1;
+	        var isDiv = context.type == DOM;
+	        var is2D = context.type == CANVAS;
+	
+	        var mouse = {
+	            x:  0.0, y:  0.0,
+	            ox: 0.0, oy: 0.0,
+	            dx: 0.0, dy: 0.0
+	        };
+	
+	        var eventMap = [
+	
+	            context.eventTarget || context.element,
+	
+	                pointer, 'mousedown', 'touchstart',
+	                pointer, 'mousemove', 'touchmove',
+	                pointer, 'mouseup', 'touchend',
+	                pointer, 'click',
+	                pointer, 'mouseout',
+	                pointer, 'mouseover',
+	
+	            doc,
+	
+	                keypress, 'keydown', 'keyup',
+	
+	            win,
+	
+	                active, 'focus', 'blur',
+	                resize, 'resize'
+	        ];
+	
+	        var keys = {}; for ( key in keyMap ) keys[ keyMap[ key ] ] = false;
+	
+	        function trigger( method ) {
+	
+	            if ( isFunction( method ) )
+	
+	                method.apply( context, [].splice.call( arguments, 1 ) );
+	        }
+	
+	        function bind( on ) {
+	
+	            for ( index = 0; index < eventMap.length; index++ ) {
+	
+	                node = eventMap[ index ];
+	
+	                if ( isString( node ) )
+	
+	                    target[ ( on ? 'add' : 'remove' ) + 'EventListener' ].call( target, node, handler, false );
+	
+	                else if ( isFunction( node ) )
+	
+	                    handler = node;
+	
+	                else target = node;
+	            }
+	        }
+	
+	        function update() {
+	
+	            cAF( request );
+	            request = rAF( update );
+	
+	            if ( !setup ) {
+	
+	                trigger( context.setup );
+	                setup = isFunction( context.setup );
+	            }
+	
+	            if ( !resized ) {
+	                trigger( context.resize );
+	                resized = isFunction( context.resize );
+	            }
+	
+	            if ( context.running && !counter ) {
+	
+	                context.dt = ( clock = +new Date() ) - context.now;
+	                context.millis += context.dt;
+	                context.now = clock;
+	
+	                trigger( context.update );
+	
+	                // Pre draw
+	
+	                if ( is2D ) {
+	
+	                    if ( context.retina ) {
+	
+	                        context.save();
+	                        context.scale( ratio, ratio );
+	                    }
+	
+	                    if ( context.autoclear )
+	
+	                        context.clear();
+	                }
+	
+	                // Draw
+	
+	                trigger( context.draw );
+	
+	                // Post draw
+	
+	                if ( is2D && context.retina )
+	
+	                    context.restore();
+	            }
+	
+	            counter = ++counter % context.interval;
+	        }
+	
+	        function resize() {
+	
+	            target = isDiv ? context.style : context.canvas;
+	            suffix = isDiv ? 'px' : '';
+	
+	            w = context.width;
+	            h = context.height;
+	
+	            if ( context.fullscreen ) {
+	
+	                h = context.height = win.innerHeight;
+	                w = context.width = win.innerWidth;
+	            }
+	
+	            if ( context.retina && is2D && ratio ) {
+	
+	                target.style.height = h + 'px';
+	                target.style.width = w + 'px';
+	
+	                w *= ratio;
+	                h *= ratio;
+	            }
+	
+	            if ( target.height !== h )
+	
+	                target.height = h + suffix;
+	
+	            if ( target.width !== w )
+	
+	                target.width = w + suffix;
+	
+	            if ( setup ) trigger( context.resize );
+	        }
+	
+	        function align( touch, target ) {
+	
+	            bounds = target.getBoundingClientRect();
+	
+	            touch.x = touch.pageX - bounds.left - (win.scrollX || win.pageXOffset);
+	            touch.y = touch.pageY - bounds.top - (win.scrollY || win.pageYOffset);
+	
+	            if ( context.retina && is2D && ratio ) {
+	
+	                touch.x *= ratio;
+	                touch.y *= ratio;
+	
+	            }
+	
+	            return touch;
+	        }
+	
+	        function augment( touch, target ) {
+	
+	            align( touch, context.element );
+	
+	            target = target || {};
+	
+	            target.ox = target.x || touch.x;
+	            target.oy = target.y || touch.y;
+	
+	            target.x = touch.x;
+	            target.y = touch.y;
+	
+	            target.dx = target.x - target.ox;
+	            target.dy = target.y - target.oy;
+	
+	            return target;
+	        }
+	
+	        function process( event ) {
+	
+	            event.preventDefault();
+	
+	            copy = clone( event );
+	            copy.originalEvent = event;
+	
+	            if ( copy.touches ) {
+	
+	                touches.length = copy.touches.length;
+	
+	                for ( index = 0; index < copy.touches.length; index++ )
+	
+	                    touches[ index ] = augment( copy.touches[ index ], touches[ index ] );
+	
+	            } else {
+	
+	                touches.length = 0;
+	                touches[0] = augment( copy, mouse );
+	            }
+	
+	            extend( mouse, touches[0], true );
+	
+	            return copy;
+	        }
+	
+	        function pointer( event ) {
+	
+	            event = process( event );
+	
+	            min = ( max = eventMap.indexOf( type = event.type ) ) - 1;
+	
+	            context.dragging =
+	
+	                /down|start/.test( type ) ? true :
+	
+	                /up|end/.test( type ) ? false :
+	
+	                context.dragging;
+	
+	            while( min )
+	
+	                isString( eventMap[ min ] ) ?
+	
+	                    trigger( context[ eventMap[ min-- ] ], event ) :
+	
+	                isString( eventMap[ max ] ) ?
+	
+	                    trigger( context[ eventMap[ max++ ] ], event ) :
+	
+	                min = 0;
+	        }
+	
+	        function keypress( event ) {
+	
+	            key = event.keyCode;
+	            val = event.type == 'keyup';
+	            keys[ key ] = keys[ keyName( key ) ] = !val;
+	
+	            trigger( context[ event.type ], event );
+	        }
+	
+	        function active( event ) {
+	
+	            if ( context.autopause )
+	
+	                ( event.type == 'blur' ? stop : start )();
+	
+	            trigger( context[ event.type ], event );
+	        }
+	
+	        // Public API
+	
+	        function start() {
+	
+	            context.now = +new Date();
+	            context.running = true;
+	        }
+	
+	        function stop() {
+	
+	            context.running = false;
+	        }
+	
+	        function toggle() {
+	
+	            ( context.running ? stop : start )();
+	        }
+	
+	        function clear() {
+	
+	            if ( is2D )
+	
+	                context.clearRect( 0, 0, context.width, context.height );
+	        }
+	
+	        function destroy() {
+	
+	            parent = context.element.parentNode;
+	            index = instances.indexOf( context );
+	
+	            if ( parent ) parent.removeChild( context.element );
+	            if ( ~index ) instances.splice( index, 1 );
+	
+	            bind( false );
+	            stop();
+	        }
+	
+	        extend( context, {
+	
+	            touches: touches,
+	            mouse: mouse,
+	            keys: keys,
+	
+	            dragging: false,
+	            running: false,
+	            millis: 0,
+	            now: NaN,
+	            dt: NaN,
+	
+	            destroy: destroy,
+	            toggle: toggle,
+	            clear: clear,
+	            start: start,
+	            stop: stop
+	        });
+	
+	        instances.push( context );
+	
+	        return ( context.autostart && start(), bind( true ), resize(), update(), context );
+	    }
+	
+	    /*
+	    ----------------------------------------------------------------------
+	
+	        Global API
+	
+	    ----------------------------------------------------------------------
+	    */
+	
+	    var element, context, Sketch = {
+	
+	        CANVAS: CANVAS,
+	        WEB_GL: WEBGL,
+	        WEBGL: WEBGL,
+	        DOM: DOM,
+	
+	        instances: instances,
+	
+	        install: function( context ) {
+	
+	            if ( !context[ HAS_SKETCH ] ) {
+	
+	                for ( var i = 0; i < MATH_PROPS.length; i++ )
+	
+	                    context[ MATH_PROPS[i] ] = M[ MATH_PROPS[i] ];
+	
+	                extend( context, {
+	
+	                    TWO_PI: M.PI * 2,
+	                    HALF_PI: M.PI / 2,
+	                    QUARTER_PI: M.PI / 4,
+	
+	                    random: function( min, max ) {
+	
+	                        if ( isArray( min ) )
+	
+	                            return min[ ~~( M.random() * min.length ) ];
+	
+	                        if ( !isNumber( max ) )
+	
+	                            max = min || 1, min = 0;
+	
+	                        return min + M.random() * ( max - min );
+	                    },
+	
+	                    lerp: function( min, max, amount ) {
+	
+	                        return min + amount * ( max - min );
+	                    },
+	
+	                    map: function( num, minA, maxA, minB, maxB ) {
+	
+	                        return ( num - minA ) / ( maxA - minA ) * ( maxB - minB ) + minB;
+	                    }
+	                });
+	
+	                context[ HAS_SKETCH ] = true;
+	            }
+	        },
+	
+	        create: function( options ) {
+	
+	            options = extend( options || {}, defaults );
+	
+	            if ( options.globals ) Sketch.install( self );
+	
+	            element = options.element = options.element || doc.createElement( options.type === DOM ? 'div' : 'canvas' );
+	
+	            context = options.context = options.context || (function() {
+	
+	                switch( options.type ) {
+	
+	                    case CANVAS:
+	
+	                        return element.getContext( '2d', options );
+	
+	                    case WEBGL:
+	
+	                        return element.getContext( 'webgl', options ) || element.getContext( 'experimental-webgl', options );
+	
+	                    case DOM:
+	
+	                        return element.canvas = element;
+	                }
+	
+	            })();
+	
+	            ( options.container || doc.body ).appendChild( element );
+	
+	            return Sketch.augment( context, options );
+	        },
+	
+	        augment: function( context, options ) {
+	
+	            options = extend( options || {}, defaults );
+	
+	            options.element = context.canvas || context;
+	            options.element.className += ' sketch';
+	
+	            extend( context, options, true );
+	
+	            return constructor( context );
+	        }
+	    };
+	
+	    /*
+	    ----------------------------------------------------------------------
+	
+	        Shims
+	
+	    ----------------------------------------------------------------------
+	    */
+	
+	    var vendors = [ 'ms', 'moz', 'webkit', 'o' ];
+	    var scope = self;
+	    var then = 0;
+	
+	    var a = 'AnimationFrame';
+	    var b = 'request' + a;
+	    var c = 'cancel' + a;
+	
+	    var rAF = scope[ b ];
+	    var cAF = scope[ c ];
+	
+	    for ( var i = 0; i < vendors.length && !rAF; i++ ) {
+	
+	        rAF = scope[ vendors[ i ] + 'Request' + a ];
+	        cAF = scope[ vendors[ i ] + 'Cancel' + a ];
+	    }
+	
+	    scope[ b ] = rAF = rAF || function( callback ) {
+	
+	        var now = +new Date();
+	        var dt = M.max( 0, 16 - ( now - then ) );
+	        var id = setTimeout( function() {
+	            callback( now + dt );
+	        }, dt );
+	
+	        then = now + dt;
+	        return id;
+	    };
+	
+	    scope[ c ] = cAF = cAF || function( id ) {
+	        clearTimeout( id );
+	    };
+	
+	    /*
+	    ----------------------------------------------------------------------
+	
+	        Output
+	
+	    ----------------------------------------------------------------------
+	    */
+	
+	    return Sketch;
+	
+	}));
+
+
+/***/ },
+/* 3 */
+/***/ function(module, exports, __webpack_require__) {
+
 	'use strict';
 	
 	Object.defineProperty(exports, "__esModule", {
@@ -781,7 +1240,7 @@
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _utils = __webpack_require__(3);
+	var _utils = __webpack_require__(4);
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
@@ -866,7 +1325,7 @@
 	exports.default = InfoBox;
 
 /***/ },
-/* 3 */
+/* 4 */
 /***/ function(module, exports) {
 
 	module.exports = {};
@@ -997,6 +1456,223 @@
 	    return numbers;
 	};
 
+
+/***/ },
+/* 5 */
+/***/ function(module, exports) {
+
+	"use strict";
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+	
+	exports.getMinMax = getMinMax;
+	exports.rand = rand;
+	exports.createMapper = createMapper;
+	exports.isWithinBounds = isWithinBounds;
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+	
+	function getMinMax(points) {
+	  var max = points.reduce(function (_ref, _ref2) {
+	    var _ref4 = _slicedToArray(_ref, 2);
+	
+	    var mX = _ref4[0];
+	    var mY = _ref4[1];
+	
+	    var _ref3 = _slicedToArray(_ref2, 2);
+	
+	    var x = _ref3[0];
+	    var y = _ref3[1];
+	    return [mX > x ? mX : x, mY > y ? mY : y];
+	  }, [-Infinity, -Infinity]);
+	
+	  var min = points.reduce(function (_ref5, _ref6) {
+	    var _ref8 = _slicedToArray(_ref5, 2);
+	
+	    var mX = _ref8[0];
+	    var mY = _ref8[1];
+	
+	    var _ref7 = _slicedToArray(_ref6, 2);
+	
+	    var x = _ref7[0];
+	    var y = _ref7[1];
+	    return [mX < x ? mX : x, mY < y ? mY : y];
+	  }, [Infinity, Infinity]);
+	
+	  return { min: min, max: max };
+	}
+	
+	function rand(list) {
+	  return list[list.length * Math.random() | 0];
+	}
+	
+	function easeIn(step, start, change) {
+	  return change * (1 - Math.pow(1 - step, 3)) + start;
+	}
+	
+	function createMapper(canvasHeight, canvasWidth, min, max) {
+	  var _min = _slicedToArray(min, 2);
+	
+	  var minX = _min[0];
+	  var minY = _min[1];
+	
+	  var _max = _slicedToArray(max, 2);
+	
+	  var maxX = _max[0];
+	  var maxY = _max[1];
+	
+	
+	  var xDiff = maxX - minX;
+	  var yDiff = maxY - minY;
+	
+	  var xScale = canvasWidth / xDiff;
+	  var yScale = canvasHeight / yDiff;
+	  var scale = xScale < yScale ? xScale : yScale;
+	
+	  // center
+	  var halfway = canvasWidth / 2;
+	  var halfMapWidth = xDiff * scale / 2;
+	  var margin = halfway - halfMapWidth;
+	
+	  return function (_ref9) {
+	    var _ref10 = _slicedToArray(_ref9, 2);
+	
+	    var x = _ref10[0];
+	    var y = _ref10[1];
+	    return [margin + (x - minX) * scale | 0, (maxY - y) * scale | 0];
+	  };
+	}
+	
+	function dist(_ref11, _ref12) {
+	  var _ref14 = _slicedToArray(_ref11, 2);
+	
+	  var x1 = _ref14[0];
+	  var y1 = _ref14[1];
+	
+	  var _ref13 = _slicedToArray(_ref12, 2);
+	
+	  var x2 = _ref13[0];
+	  var y2 = _ref13[1];
+	
+	  var xDist = x2 - x1;
+	  var yDist = y2 - y1;
+	  return Math.sqrt(xDist * xDist + yDist * yDist);
+	}
+	
+	function drawArc(ctx, arc, color, width) {
+	  ctx.beginPath();
+	  ctx.strokeStyle = color;
+	  ctx.lineWidth = width;
+	  ctx.moveTo.apply(ctx, _toConsumableArray(arc[0]));
+	  arc.slice(1).forEach(function (pt) {
+	    return ctx.lineTo.apply(ctx, _toConsumableArray(pt));
+	  });
+	  ctx.stroke();
+	}
+	
+	function getArcDist(arc) {
+	  var last = arc[0];
+	  return arc.reduce(function (total, pt) {
+	    total += dist(last, pt);
+	    last = pt;
+	    return total;
+	  }, 0);
+	}
+	
+	function cutArc(arc, perc) {
+	  var last = arc[0];
+	  var toGo = getArcDist(arc) * perc;
+	  var toDraw = [last];
+	  for (var i = 1, len = arc.length; i < len; i++) {
+	    var pt = arc[i];
+	    var segmentDist = dist(last, pt);
+	    if (!segmentDist) {
+	      continue;
+	    }
+	    if (toGo === 0) {
+	      break;
+	    }
+	    if (segmentDist <= toGo) {
+	      toDraw.push(pt);
+	      toGo -= segmentDist;
+	      last = pt;
+	      continue;
+	    }
+	    var cutPerc = toGo / segmentDist;
+	    var x = (pt[0] - last[0]) * cutPerc + last[0];
+	    var y = (pt[1] - last[1]) * cutPerc + last[1];
+	    toDraw.push([x, y]);
+	    break;
+	  }
+	  return toDraw;
+	}
+	
+	function getCenter(segment) {
+	  var _getMinMax = getMinMax(segment);
+	
+	  var min = _getMinMax.min;
+	  var max = _getMinMax.max;
+	
+	  return [(min[0] + max[0]) / 2 | 0, (min[1] + max[1]) / 2 | 0];
+	}
+	
+	function isWithinBounds(line, min, max) {
+	  return line.center[0] >= min[0] && line.center[0] <= max[0] && line.center[1] >= min[1] && line.center[1] <= max[1];
+	}
+	
+	var Line = exports.Line = function () {
+	  function Line(_ref15) {
+	    var segment = _ref15.segment;
+	    var color = _ref15.color;
+	    var duration = _ref15.duration;
+	
+	    _classCallCheck(this, Line);
+	
+	    this.segment = segment;
+	    this.to = 0;
+	    this.cur = 0;
+	    this.from = this.cur;
+	    this.color = color;
+	    this.start = 0;
+	    this.duration = duration;
+	    this.center = getCenter(segment);
+	  }
+	
+	  _createClass(Line, [{
+	    key: "setTo",
+	    value: function setTo(to, now) {
+	      if (to !== this.to) {
+	        this.start = now;
+	        this.from = this.cur;
+	        this.to = to;
+	      }
+	    }
+	  }, {
+	    key: "update",
+	    value: function update(t) {
+	      var elapsed = t - this.start;
+	      this.cur = easeIn(elapsed / this.duration, this.from, this.to - this.from);
+	      this.cur = Math.min(Math.max(0, this.cur), 1);
+	    }
+	  }, {
+	    key: "draw",
+	    value: function draw(ctx) {
+	      if (this.cur === 0) return;
+	      var toDraw = this.cur === 1 ? this.segment : cutArc(this.segment, this.cur);
+	      drawArc(ctx, toDraw, this.color, 1);
+	    }
+	  }]);
+
+	  return Line;
+	}();
 
 /***/ }
 /******/ ]);
