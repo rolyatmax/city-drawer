@@ -82,7 +82,7 @@
 	  var maxPt = _getMinMax.max;
 	
 	
-	  container.style.height = container.getBoundingClientRect().height * 2 + 'px';
+	  container.style.height = container.getBoundingClientRect().height * 2.5 + 'px';
 	
 	  window.sketch = _sketchJs2.default.create({
 	    container: container,
@@ -99,7 +99,7 @@
 	      var mapToCanvas = (0, _helpers.createMapper)(this.height, this.width, minPt, maxPt);
 	      this.lines = segments.map(function (segment) {
 	        segment = segment.map(mapToCanvas);
-	        var color = 'rgba(10, 10, 10, 0.8)';
+	        var color = 'rgba(10, 10, 10, 0.45)';
 	        var duration = DURATION;
 	        return new _helpers.Line({ segment: segment, color: color, duration: duration });
 	      });
@@ -127,8 +127,9 @@
 	    update: function update() {
 	      var _this = this;
 	
-	      var min = [this.mouse.x - BRUSH_SIZE, this.mouse.y - BRUSH_SIZE];
-	      var max = [this.mouse.x + BRUSH_SIZE, this.mouse.y + BRUSH_SIZE];
+	      var touch = this.touches[0] || this.mouse;
+	      var min = [touch.x - BRUSH_SIZE, touch.y - BRUSH_SIZE];
+	      var max = [touch.x + BRUSH_SIZE, touch.y + BRUSH_SIZE];
 	      this.lines.forEach(function (line) {
 	        var to = (0, _helpers.isWithinBounds)(line, min, max) ? 1 : 0;
 	        line.setTo(to, _this.millis);

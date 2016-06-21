@@ -25,7 +25,7 @@ fetch('data/segments.json')
     max: maxPt,
   } = getMinMax(points);
 
-  container.style.height = `${container.getBoundingClientRect().height * 2}px`;
+  container.style.height = `${container.getBoundingClientRect().height * 2.5}px`;
 
   window.sketch = Sketch.create({
     container,
@@ -42,7 +42,7 @@ fetch('data/segments.json')
       const mapToCanvas = createMapper(this.height, this.width, minPt, maxPt);
       this.lines = segments.map(segment => {
         segment = segment.map(mapToCanvas);
-        const color = 'rgba(10, 10, 10, 0.8)';
+        const color = 'rgba(10, 10, 10, 0.45)';
         const duration = DURATION;
         return new Line({ segment, color, duration });
       });
@@ -64,8 +64,9 @@ fetch('data/segments.json')
     },
 
     update() {
-      const min = [this.mouse.x - BRUSH_SIZE, this.mouse.y - BRUSH_SIZE];
-      const max = [this.mouse.x + BRUSH_SIZE, this.mouse.y + BRUSH_SIZE];
+      const touch = this.touches[0] || this.mouse;
+      const min = [touch.x - BRUSH_SIZE, touch.y - BRUSH_SIZE];
+      const max = [touch.x + BRUSH_SIZE, touch.y + BRUSH_SIZE];
       this.lines.forEach(line => {
         const to = isWithinBounds(line, min, max) ? 1 : 0;
         line.setTo(to, this.millis);
