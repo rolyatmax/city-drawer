@@ -3,9 +3,11 @@
 import 'whatwg-fetch';
 import Sketch from 'sketch-js';
 import InfoBox from './info_box';
-import { Line, createMapper, getMinMax, rand } from './helpers';
+import { Line, createMapper, getMinMax, isWithinBounds } from './helpers';
 
 
+const BRUSH_SIZE = 150;
+const DURATION = 1500;
 const container = document.getElementById('wrapper');
 
 fetch('data/segments.json')
@@ -28,7 +30,7 @@ fetch('data/segments.json')
   window.sketch = Sketch.create({
     container,
     fullscreen: false,
-    autopause: false,
+    autopause: true,
     autoclear: true,
     autostart: true,
     retina: true,
@@ -41,26 +43,15 @@ fetch('data/segments.json')
       this.lines = segments.map(segment => {
         segment = segment.map(mapToCanvas);
         const color = 'rgba(10, 10, 10, 0.8)';
-        const speed = 0.02;
-        return new Line({ segment, color, speed });
+        const duration = DURATION;
+        return new Line({ segment, color, duration });
       });
-      this.isActive = [];
-      this.animate();
+      // this.lines = this.lines.sort((a, b) => (a.center[0] < b.center[0] ? -1 : 1));
     },
 
-    animate() {
-      // this.isActive = this.isActive.filter(line => {
-      //   line.to = 0;
-      //   return false;
-      // });
-      let i = 20;
-      while (i--) {
-        const line = rand(this.lines);
-        line.to = 1;
-        this.isActive.push(line);
-      }
-      setTimeout(() => this.animate(), 30);
-    },
+    // getWithinBounds(min, max) {
+    //   return this.lines.filter(line => isWithinBounds(line, min, max));
+    // },
 
     resize() {
       const { width, height } = container.getBoundingClientRect();
@@ -73,9 +64,13 @@ fetch('data/segments.json')
     },
 
     update() {
-      // look at mouse and set to 1 and add to isAnimating
-      // look at those in isAnimating out of range and set to 0
-      this.lines.forEach(line => line.update());
+      const min = [this.mouse.x - BRUSH_SIZE, this.mouse.y - BRUSH_SIZE];
+      const max = [this.mouse.x + BRUSH_SIZE, this.mouse.y + BRUSH_SIZE];
+      this.lines.forEach(line => {
+        const to = isWithinBounds(line, min, max) ? 1 : 0;
+        line.setTo(to, this.millis);
+      });
+      this.lines.forEach(line => line.update(this.millis));
     },
 
     draw() {

@@ -16,6 +16,10 @@ export function rand(list) {
   return list[list.length * Math.random() | 0];
 }
 
+function easeIn(step, start, change) {
+  return change * (1 - Math.pow(1 - step, 3)) + start;
+}
+
 export function createMapper(canvasHeight, canvasWidth, min, max) {
   const [minX, minY] = min;
   const [maxX, maxY] = max;
@@ -96,24 +100,38 @@ function getCenter(segment) {
 }
 
 
+export function isWithinBounds(line, min, max) {
+  return line.center[0] >= min[0] &&
+    line.center[0] <= max[0] &&
+    line.center[1] >= min[1] &&
+    line.center[1] <= max[1];
+}
+
+
 export class Line {
-  constructor({ segment, color, speed }) {
+  constructor({ segment, color, duration }) {
     this.segment = segment;
     this.to = 0;
     this.cur = 0;
+    this.from = this.cur;
     this.color = color;
-    this.speed = speed;
+    this.start = 0;
+    this.duration = duration;
     this.center = getCenter(segment);
   }
 
-  update() {
-    if (Math.abs(this.cur - this.to) < 0.007) {
-      this.cur = this.to;
+  setTo(to, now) {
+    if (to !== this.to) {
+      this.start = now;
+      this.from = this.cur;
+      this.to = to;
     }
-    const d = (this.to - this.cur) * this.speed;
-    this.cur += d;
+  }
+
+  update(t) {
+    const elapsed = t - this.start;
+    this.cur = easeIn(elapsed / this.duration, this.from, this.to - this.from);
     this.cur = Math.min(Math.max(0, this.cur), 1);
-    return this.cur !== this.to;
   }
 
   draw(ctx) {

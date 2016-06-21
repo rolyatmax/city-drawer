@@ -60,6 +60,8 @@
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
+	var BRUSH_SIZE = 150;
+	var DURATION = 1500;
 	var container = document.getElementById('wrapper');
 	
 	fetch('data/segments.json').then(function (resp) {
@@ -85,7 +87,7 @@
 	  window.sketch = _sketchJs2.default.create({
 	    container: container,
 	    fullscreen: false,
-	    autopause: false,
+	    autopause: true,
 	    autoclear: true,
 	    autostart: true,
 	    retina: true,
@@ -98,29 +100,17 @@
 	      this.lines = segments.map(function (segment) {
 	        segment = segment.map(mapToCanvas);
 	        var color = 'rgba(10, 10, 10, 0.8)';
-	        var speed = 0.02;
-	        return new _helpers.Line({ segment: segment, color: color, speed: speed });
+	        var duration = DURATION;
+	        return new _helpers.Line({ segment: segment, color: color, duration: duration });
 	      });
-	      this.isActive = [];
-	      this.animate();
+	      // this.lines = this.lines.sort((a, b) => (a.center[0] < b.center[0] ? -1 : 1));
 	    },
-	    animate: function animate() {
-	      var _this = this;
 	
-	      // this.isActive = this.isActive.filter(line => {
-	      //   line.to = 0;
-	      //   return false;
-	      // });
-	      var i = 20;
-	      while (i--) {
-	        var line = (0, _helpers.rand)(this.lines);
-	        line.to = 1;
-	        this.isActive.push(line);
-	      }
-	      setTimeout(function () {
-	        return _this.animate();
-	      }, 30);
-	    },
+	
+	    // getWithinBounds(min, max) {
+	    //   return this.lines.filter(line => isWithinBounds(line, min, max));
+	    // },
+	
 	    resize: function resize() {
 	      var _container$getBoundin = container.getBoundingClientRect();
 	
@@ -135,10 +125,16 @@
 	      this.width = width;
 	    },
 	    update: function update() {
-	      // look at mouse and set to 1 and add to isAnimating
-	      // look at those in isAnimating out of range and set to 0
+	      var _this = this;
+	
+	      var min = [this.mouse.x - BRUSH_SIZE, this.mouse.y - BRUSH_SIZE];
+	      var max = [this.mouse.x + BRUSH_SIZE, this.mouse.y + BRUSH_SIZE];
 	      this.lines.forEach(function (line) {
-	        return line.update();
+	        var to = (0, _helpers.isWithinBounds)(line, min, max) ? 1 : 0;
+	        line.setTo(to, _this.millis);
+	      });
+	      this.lines.forEach(function (line) {
+	        return line.update(_this.millis);
 	      });
 	    },
 	    draw: function draw() {
@@ -1478,6 +1474,7 @@
 	exports.getMinMax = getMinMax;
 	exports.rand = rand;
 	exports.createMapper = createMapper;
+	exports.isWithinBounds = isWithinBounds;
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
@@ -1515,6 +1512,10 @@
 	
 	function rand(list) {
 	  return list[list.length * Math.random() | 0];
+	}
+	
+	function easeIn(step, start, change) {
+	  return change * (1 - Math.pow(1 - step, 3)) + start;
 	}
 	
 	function createMapper(canvasHeight, canvasWidth, min, max) {
@@ -1623,32 +1624,43 @@
 	  return [(min[0] + max[0]) / 2 | 0, (min[1] + max[1]) / 2 | 0];
 	}
 	
+	function isWithinBounds(line, min, max) {
+	  return line.center[0] >= min[0] && line.center[0] <= max[0] && line.center[1] >= min[1] && line.center[1] <= max[1];
+	}
+	
 	var Line = exports.Line = function () {
 	  function Line(_ref15) {
 	    var segment = _ref15.segment;
 	    var color = _ref15.color;
-	    var speed = _ref15.speed;
+	    var duration = _ref15.duration;
 	
 	    _classCallCheck(this, Line);
 	
 	    this.segment = segment;
 	    this.to = 0;
 	    this.cur = 0;
+	    this.from = this.cur;
 	    this.color = color;
-	    this.speed = speed;
+	    this.start = 0;
+	    this.duration = duration;
 	    this.center = getCenter(segment);
 	  }
 	
 	  _createClass(Line, [{
-	    key: "update",
-	    value: function update() {
-	      if (Math.abs(this.cur - this.to) < 0.007) {
-	        this.cur = this.to;
+	    key: "setTo",
+	    value: function setTo(to, now) {
+	      if (to !== this.to) {
+	        this.start = now;
+	        this.from = this.cur;
+	        this.to = to;
 	      }
-	      var d = (this.to - this.cur) * this.speed;
-	      this.cur += d;
+	    }
+	  }, {
+	    key: "update",
+	    value: function update(t) {
+	      var elapsed = t - this.start;
+	      this.cur = easeIn(elapsed / this.duration, this.from, this.to - this.from);
 	      this.cur = Math.min(Math.max(0, this.cur), 1);
-	      return this.cur !== this.to;
 	    }
 	  }, {
 	    key: "draw",
