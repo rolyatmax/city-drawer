@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 
 if (!process.argv[2]) {
-  console.error('Please pass in a path');
+  console.error(`usage: ${process.argv[0]} ${process.argv[1]} <input file>`);
   process.exit(1);
 }
 
@@ -78,23 +78,29 @@ const geojson = JSON.parse(fileContents);
 
 const lineSegments = [];
 
-geojson.features
-  .map(feat => feat.geometry.coordinates)
-  .forEach(poly => {
-    poly.forEach(lines => {
-      lines.forEach(line => {
-        for (let i = 1; i < line.length; i++) {
-          lineSegments.push([line[i - 1], line[i]]);
-        }
-      });
-    });
-  });
+function processLine(line, segmentsArray) {
+  for (let i = 1; i < line.length; i++) {
+    segmentsArray.push([line[i - 1], line[i]]);
+  }
+}
 
-console.log(`${lineSegments.length} initial line segments, writing to file`);
+geojson.features
+  .map(feat => feat.geometry)
+  .forEach(geo => {
+    if (geo.type === 'MultiPolygon') {
+      geo.coordinates.forEach(lines => {
+        lines.forEach(line => processLine(line, lineSegments));
+      });
+    }
+    if (geo.type === 'Polygon') {
+      geo.coordinates.forEach(line => processLine(line, lineSegments));
+    }
+  });
 
 const preSegOutputFile = path.resolve(process.cwd(), `pre-segments_${Date.now()}.json`);
 fs.writeFileSync(preSegOutputFile, JSON.stringify(lineSegments));
 
+const initialSegmentCount = lineSegments.length;
 console.log('File written');
 
 function reduceToMinSegments(segments) {
@@ -147,9 +153,19 @@ function reduceToMinSegments(segments) {
     // console.log('-------');
     i += 1;
   }
-  console.log(`${finalSegments.length} final segments - in ${i} iterations`);
+  console.log(`${initialSegmentCount} initial segments --> ${finalSegments.length} final segments - in ${i} iterations`);
   return finalSegments;
 }
 
+let finalFinal = null;
+let k = 5;
+while (k--) {
+  const outputSegments = reduceToMinSegments(lineSegments.slice());
+  if (!finalFinal || outputSegments.length < finalFinal.length) {
+    finalFinal = outputSegments;
+  }
+}
+console.log(`${initialSegmentCount} initial segments --> ${finalFinal.length} final segments`);
+
 const outputFile = path.resolve(process.cwd(), `segments_${Date.now()}.json`);
-fs.writeFileSync(outputFile, JSON.stringify(reduceToMinSegments(lineSegments)));
+fs.writeFileSync(outputFile, JSON.stringify(finalFinal));

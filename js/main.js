@@ -10,20 +10,28 @@ const BRUSH_SIZE = 150;
 const DURATION = 1500;
 const container = document.getElementById('wrapper');
 
-fetch('data/segments.json')
+fetch('data/2010_census_block_groups_polygons_segments.json')
 .then((resp) => resp.json())
 .then((segments) => {
   window.segments = segments;
 
   const points = [];
   segments.forEach(seg => {
-    seg.forEach(point => points.push(point));
+    seg.forEach(point => {
+      // for us counties, filter out any points where x > 0,
+      // because we don't want to skew the map because parts
+      // of canada happen to have positive latitudes
+      if (point[0] > 0) return;
+      points.push(point);
+    });
   });
 
   const {
     min: minPt,
     max: maxPt,
   } = getMinMax(points);
+
+  console.log('Min/Max:', minPt, maxPt);
 
   container.style.height = `${container.getBoundingClientRect().height * 2.5}px`;
 

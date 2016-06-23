@@ -31,8 +31,6 @@
   "dependencies": {
     "expect": "1.20.1",
     "sketch-js": "git+ssh://git@github.com:soulwire/sketch.js.git#21a58de",
-    "drawer": "git+ssh://git@github.com:rolyatmax/drawer.git#98e17ce",
-    "utils": "git+ssh://git@github.com:rolyatmax/utils.git",
-    "whatwg-fetch": "^1.0.0"
+    "whatwg-fetch": "1.0.0"
   }
 }
