@@ -10,7 +10,7 @@ const BRUSH_SIZE = 150;
 const DURATION = 1500;
 const container = document.getElementById('wrapper');
 
-fetch('data/2010_census_block_groups_polygons_segments.json')
+fetch('data/lots_segments.json')
 .then((resp) => resp.json())
 .then((segments) => {
   window.segments = segments;
