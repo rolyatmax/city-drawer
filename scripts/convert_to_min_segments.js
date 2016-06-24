@@ -1,5 +1,3 @@
-'use strict';
-
 const fs = require('fs');
 const path = require('path');
 
@@ -74,34 +72,9 @@ function mergeSegments(segmentA, segmentB) {
 
 const filepath = path.resolve(process.cwd(), process.argv[2]);
 const fileContents = fs.readFileSync(filepath);
-const geojson = JSON.parse(fileContents);
-
-const lineSegments = [];
-
-function processLine(line, segmentsArray) {
-  for (let i = 1; i < line.length; i++) {
-    segmentsArray.push([line[i - 1], line[i]]);
-  }
-}
-
-geojson.features
-  .map(feat => feat.geometry)
-  .forEach(geo => {
-    if (geo.type === 'MultiPolygon') {
-      geo.coordinates.forEach(lines => {
-        lines.forEach(line => processLine(line, lineSegments));
-      });
-    }
-    if (geo.type === 'Polygon') {
-      geo.coordinates.forEach(line => processLine(line, lineSegments));
-    }
-  });
-
-const preSegOutputFile = path.resolve(process.cwd(), `pre-segments_${Date.now()}.json`);
-fs.writeFileSync(preSegOutputFile, JSON.stringify(lineSegments));
+const lineSegments = JSON.parse(fileContents);
 
 const initialSegmentCount = lineSegments.length;
-console.log('File written');
 
 function reduceToMinSegments(segments) {
   const lookupTable = {};
@@ -113,7 +86,6 @@ function reduceToMinSegments(segments) {
     const segment = randomItem(segments);
     const pointA = segment[0];
     const pointB = segment[segment.length - 1];
-    // console.log('Using segment:', segment);
     const mergeCandidates = [].concat(
       lookupTable[pointA.join(',')] || [],
       lookupTable[pointB.join(',')] || []
@@ -126,8 +98,6 @@ function reduceToMinSegments(segments) {
       selfIndex = mergeCandidates.indexOf(segment);
     }
 
-    // console.log('Merge candidates:', mergeCandidates);
-
     if (!mergeCandidates.length || segments.length === 1) {
       finalSegments.push(segment);
       removeFromLookupTable(segment, lookupTable);
@@ -137,11 +107,7 @@ function reduceToMinSegments(segments) {
 
     const mergeCandidate = randomItem(mergeCandidates);
 
-    // console.log('Selected merge candidate:', mergeCandidate);
-
     const merged = mergeSegments(segment, mergeCandidate);
-
-    // console.log('Merged:', merged);
 
     segments.splice(segments.indexOf(segment), 1);
     segments.splice(segments.indexOf(mergeCandidate), 1);
@@ -150,7 +116,6 @@ function reduceToMinSegments(segments) {
     segments.push(merged);
     addToLookupTable(merged, lookupTable);
     console.log(`${i} iterations: ${segments.length} segments, ${finalSegments.length} final segments`);
-    // console.log('-------');
     i += 1;
   }
   console.log(`${initialSegmentCount} initial segments --> ${finalSegments.length} final segments - in ${i} iterations`);
@@ -158,7 +123,7 @@ function reduceToMinSegments(segments) {
 }
 
 let finalFinal = null;
-let k = 5;
+let k = 1;
 while (k--) {
   const outputSegments = reduceToMinSegments(lineSegments.slice());
   if (!finalFinal || outputSegments.length < finalFinal.length) {

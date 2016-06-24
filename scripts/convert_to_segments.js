@@ -1,37 +1,82 @@
-'use strict';
-
 // converts geojson files of multipolygons into a list of two-point line segments
 // written to stdout
 
-const fs = require('fs');
-const path = require('path');
+const { stdin, stdout } = process;
+let data = '';
 
-if (!process.argv[2]) {
-  console.error('Please pass in a path');
-  process.exit(1);
+stdin.on('readable', () => {
+  const chunk = stdin.read();
+  if (chunk !== null) {
+    data += chunk;
+  }
+  pump();
+});
+
+stdin.on('end', () => {
+  pump();
+  end();
+});
+
+stdout.write('[');
+
+let hasReachedFeatures = false;
+
+function pump() {
+  // ignore everything up to features
+  if (!hasReachedFeatures) {
+    const featuresText = '"features": [';
+    const featuresIndex = data.indexOf(featuresText);
+    if (featuresIndex < 0) {
+      data = '';
+    } else {
+      data = data.slice(featuresIndex + featuresText.length);
+      hasReachedFeatures = true;
+    }
+  }
+
+  let openBraces = 0;
+  let objectStart = null;
+  for (let i = 0; i < data.length; i++) {
+    const char = data[i];
+    if (char === '{' && openBraces === 0) objectStart = i;
+    if (char === '{') openBraces += 1;
+    if (char === '}') openBraces -= 1;
+    if (char === '}' && openBraces === 0) processFeature(data.slice(objectStart, i + 1));
+    if (char === ']' && openBraces === 0) end();
+  }
+  data = data.slice(objectStart);
 }
 
-const filepath = path.resolve(process.cwd(), process.argv[2]);
-const fileContents = fs.readFileSync(filepath);
-const geojson = JSON.parse(fileContents);
+function processFeature(featJSON) {
+  const feat = JSON.parse(featJSON);
+  const geo = feat.geometry;
+  setTimeout(() => {
+    if (geo.type === 'MultiPolygon') {
+      geo.coordinates.forEach(lines => {
+        lines.forEach(processLine);
+      });
+    }
+    if (geo.type === 'Polygon') {
+      geo.coordinates.forEach(processLine);
+    }
+    if (geo.type === 'LineString') {
+      processLine(geo.coordinates);
+    }
+  }, 1);
+}
 
-process.stdout.write('[');
+function end() {
+  stdout.write(']');
+  process.exit(0);
+}
 
 let isFirst = true;
 
-geojson.features
-  .map(feat => feat.geometry.coordinates)
-  .forEach(poly => {
-    poly.forEach(lines => {
-      lines.forEach(line => {
-        for (let i = 1; i < line.length; i++) {
-          if (!isFirst) process.stdout.write(',');
-          isFirst = false;
-          const segmentJSON = JSON.stringify([line[i - 1], line[i]]);
-          process.stdout.write(segmentJSON);
-        }
-      });
-    });
-  });
-
-process.stdout.write(']');
+function processLine(line) {
+  for (let i = 1; i < line.length; i++) {
+    if (!isFirst) stdout.write(',');
+    isFirst = false;
+    const segmentJSON = JSON.stringify([line[i - 1], line[i]]);
+    stdout.write(segmentJSON);
+  }
+}

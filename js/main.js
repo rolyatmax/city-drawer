@@ -6,7 +6,7 @@ import InfoBox from './info_box';
 import { Line, createMapper, getMinMax, isWithinBounds } from './helpers';
 
 
-const BRUSH_SIZE = 150;
+const BRUSH_SIZE = 120;
 const DURATION = 1500;
 const container = document.getElementById('wrapper');
 
@@ -21,7 +21,7 @@ fetch('data/lots_segments.json')
       // for us counties, filter out any points where x > 0,
       // because we don't want to skew the map because parts
       // of canada happen to have positive latitudes
-      if (point[0] > 0) return;
+      // if (point[0] > 0) return;
       points.push(point);
     });
   });

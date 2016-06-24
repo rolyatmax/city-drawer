@@ -3,6 +3,7 @@
   "extends": "airbnb-base",
   "rules": {
     "no-console": "off",
-    "no-param-reassign": "off"
+    "no-param-reassign": "off",
+    "no-use-before-define": ["error", { "functions": false, "classes": false }]
   }
 }
