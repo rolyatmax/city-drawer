@@ -64,14 +64,20 @@
 	var DURATION = 1500;
 	var container = document.getElementById('wrapper');
 	
-	fetch('data/segments.json').then(function (resp) {
+	var files = ['paris_proper_segments.json', 'lots_segments.json'].map(function (f) {
+	  return 'data/' + f;
+	});
+	
+	var file = files[files.length * Math.random() | 0];
+	
+	fetch(file).then(function (resp) {
 	  return resp.json();
 	}).then(function (segments) {
 	  window.segments = segments;
 	
 	  var points = [];
 	  segments.forEach(function (seg) {
-	    seg.forEach(function (point) {
+	    return seg.forEach(function (point) {
 	      return points.push(point);
 	    });
 	  });
@@ -81,6 +87,8 @@
 	  var minPt = _getMinMax.min;
 	  var maxPt = _getMinMax.max;
 	
+	
+	  console.log('Min/Max:', minPt, maxPt);
 	
 	  container.style.height = container.getBoundingClientRect().height * 2.5 + 'px';
 	
@@ -99,18 +107,13 @@
 	      var mapToCanvas = (0, _helpers.createMapper)(this.height, this.width, minPt, maxPt);
 	      this.lines = segments.map(function (segment) {
 	        segment = segment.map(mapToCanvas);
-	        var color = 'rgba(10, 10, 10, 0.45)';
+	        var color = 'hsla(200, 90%, 80%, 0.4)';
 	        var duration = DURATION;
 	        return new _helpers.Line({ segment: segment, color: color, duration: duration });
 	      });
-	      // this.lines = this.lines.sort((a, b) => (a.center[0] < b.center[0] ? -1 : 1));
+	      this.canvas.style.backgroundColor = 'rgb(40, 40, 40)';
+	      this.globalCompositeOperation = 'lighten';
 	    },
-	
-	
-	    // getWithinBounds(min, max) {
-	    //   return this.lines.filter(line => isWithinBounds(line, min, max));
-	    // },
-	
 	    resize: function resize() {
 	      var _container$getBoundin = container.getBoundingClientRect();
 	
