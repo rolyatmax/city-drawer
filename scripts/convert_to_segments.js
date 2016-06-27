@@ -2,6 +2,12 @@
 // written to stdout
 
 const { stdin, stdout } = process;
+
+const BOUNDS = {
+  x: [2.274771, 2.406092],
+  y: [48.829804, 48.895417],
+};
+
 let data = '';
 
 stdin.on('readable', () => {
@@ -74,9 +80,17 @@ let isFirst = true;
 
 function processLine(line) {
   for (let i = 1; i < line.length; i++) {
+    if (!isPointInBounds(line[i - 1]) || !isPointInBounds(line[i])) {
+      continue;
+    }
     if (!isFirst) stdout.write(',');
     isFirst = false;
     const segmentJSON = JSON.stringify([line[i - 1], line[i]]);
     stdout.write(segmentJSON);
   }
+}
+
+function isPointInBounds([x, y]) {
+  return x > BOUNDS.x[0] && x < BOUNDS.x[1] &&
+    y > BOUNDS.y[0] && y < BOUNDS.y[1];
 }

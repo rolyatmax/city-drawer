@@ -8,7 +8,7 @@ html, body {
     height: calc(100vh - 40px);
     width: calc(100vw - 40px);
     margin: 20px auto;
-    background-color: hsl(216, 30%, 93%);
+    background-color: rgb(40, 40, 40);
 }
 
 .info {

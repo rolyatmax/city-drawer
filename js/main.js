@@ -6,25 +6,25 @@ import InfoBox from './info_box';
 import { Line, createMapper, getMinMax, isWithinBounds } from './helpers';
 
 
-const BRUSH_SIZE = 120;
+const BRUSH_SIZE = 150;
 const DURATION = 1500;
 const container = document.getElementById('wrapper');
 
-fetch('data/lots_segments.json')
+const files = [
+  'paris_proper_segments.json',
+  'lots_segments.json',
+  // 'paris_proper2_segments.json',
+].map(f => `data/${f}`);
+
+const file = files[files.length * Math.random() | 0];
+
+fetch(file)
 .then((resp) => resp.json())
 .then((segments) => {
   window.segments = segments;
 
   const points = [];
-  segments.forEach(seg => {
-    seg.forEach(point => {
-      // for us counties, filter out any points where x > 0,
-      // because we don't want to skew the map because parts
-      // of canada happen to have positive latitudes
-      // if (point[0] > 0) return;
-      points.push(point);
-    });
-  });
+  segments.forEach(seg => seg.forEach(point => points.push(point)));
 
   const {
     min: minPt,
@@ -50,16 +50,13 @@ fetch('data/lots_segments.json')
       const mapToCanvas = createMapper(this.height, this.width, minPt, maxPt);
       this.lines = segments.map(segment => {
         segment = segment.map(mapToCanvas);
-        const color = 'rgba(10, 10, 10, 0.45)';
+        const color = 'hsla(200, 90%, 80%, 0.4)';
         const duration = DURATION;
         return new Line({ segment, color, duration });
       });
-      // this.lines = this.lines.sort((a, b) => (a.center[0] < b.center[0] ? -1 : 1));
+      this.canvas.style.backgroundColor = 'rgb(40, 40, 40)';
+      this.globalCompositeOperation = 'lighten';
     },
-
-    // getWithinBounds(min, max) {
-    //   return this.lines.filter(line => isWithinBounds(line, min, max));
-    // },
 
     resize() {
       const { width, height } = container.getBoundingClientRect();
