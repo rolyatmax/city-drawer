@@ -1,10 +1,10 @@
 {
-  "name": "skyscraper",
+  "name": "city-drawer",
   "version": "1.0.0",
   "main": "js/main.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/rolyatmax/skyscraper.git"
+    "url": "git+https://github.com/rolyatmax/city-drawer.git"
   },
   "scripts": {
     "build": "webpack",
